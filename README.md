@@ -2,14 +2,13 @@
 
 A curated landscape of tools for building knowledge graphs, retrieving connected evidence, and generating grounded answers over enterprise data and documents.
 
-**Research snapshot: 5 November 2026.** Includes GraphRAG frameworks, enterprise products, semantic-model discovery, graph loaders, graph databases, and selected supporting tools. Entries describe architectural roles, not a ranking. Flow.BI and its open-source EKG projects are included explicitly.
+**Research snapshot: 5 November 2026.** Includes GraphRAG frameworks, enterprise products, semantic-model discovery, graph loaders, graph databases, and selected supporting tools. Entries describe architectural roles, not a ranking.
 
 ## Contents
 
 - [Scope and terminology](#scope-and-terminology)
 - [Landscape at a glance](#landscape-at-a-glance)
 - [Graph construction and semantic discovery](#graph-construction-and-semantic-discovery)
-- [Where Flow.BI fits](#where-flowbi-fits)
 - [GraphRAG frameworks and retrieval libraries](#graphrag-frameworks-and-retrieval-libraries)
 - [Enterprise products and managed services](#enterprise-products-and-managed-services)
 - [Graph storage and query engines](#graph-storage-and-query-engines)
@@ -40,7 +39,7 @@ The linked product pages, maintainer repositories, and official documentation ar
 
 | Layer | Function | Representative tools |
 | --- | --- | --- |
-| Semantic discovery and graph construction | Discover concepts, identifiers, relationships, and graph mappings; load enterprise records or document evidence | Flow.BI, flowbi/ekg, flowbi/doc-ekg, Neo4j LLM Knowledge Graph Builder |
+| Semantic discovery and graph construction | Discover concepts, identifiers, relationships, and graph mappings; load enterprise records or document evidence | Flow.BI, LlamaIndex extractors, Neo4j LLM Knowledge Graph Builder |
 | Ontologies and entity resolution | Maintain vocabulary and constraints; reconcile records representing the same entity | Protégé, TopBraid EDG, Graphwise Graph Modeling, Senzing |
 | Retrieval and generation frameworks | Graph traversal, vector/graph retrieval, community search, query generation, and answer synthesis | Microsoft GraphRAG, LightRAG, Neo4j GraphRAG, LlamaIndex, KAG, AWS GraphRAG Toolkit |
 | Temporal graph memory | Maintain evolving facts and retrieve context for agents | Graphiti, cognee |
@@ -52,9 +51,9 @@ The linked product pages, maintainer repositories, and official documentation ar
 flowchart TB
     S["Enterprise systems<br/>ERP · CRM · relational data"]
     D["Documents and other content"]
-    M["Semantic discovery and modeling<br/>Flow.BI · ontology tools"]
-    L["Graph loading<br/>flowbi/ekg"]
-    X["Document extraction and linking<br/>flowbi/doc-ekg · graph builders"]
+    M["Semantic discovery and modeling<br/>Concepts · identifiers · mappings"]
+    L["Graph loading<br/>Structured records · incremental updates"]
+    X["Document extraction and linking<br/>Entities · relationships · source passages"]
     G["Knowledge graph<br/>Entities · relationships · evidence"]
     R["Retrieval<br/>Graph queries · vector search · graph expansion"]
     A["Answer generation<br/>Context · citations · language model"]
@@ -68,28 +67,14 @@ flowchart TB
     E -.-> A
 ```
 
-*The diagram illustrates functional roles. The Flow.BI/ekg/doc-ekg relationship is documented; downstream retrieval and generation require a selected application stack. Other example tools are not asserted to be interchangeable integrations.*
+*The diagram illustrates functional roles rather than a particular vendor stack. Implementations may combine several roles in one product or compose separate tools.*
 
 ## Graph construction and semantic discovery
 
 | Tool | Contribution | Dependencies and boundaries | Primary evidence |
 | --- | --- | --- | --- |
-| **Flow.BI** | Derives a semantic model and enterprise knowledge graph from source metadata and profiled data, identifying business concepts and cross-system relationships. | Direct graph-foundation role. Users can review and influence the model. Confirm product deployment, source access, and downstream integration requirements. | [Knowledge graph solution](https://flow.bi/solutions/flow-bi-for-knowledge-graphs/), [solutions](https://flow.bi/solutions/) |
-| **flowbi/doc-ekg** | Enriches an existing enterprise knowledge graph with document entities, relationships, chunks, and evidence links using Flow.BI concept names as allowed entity types. | Apache-2.0. Requires Flow.BI SQL API access, a separate ekg checkout, and configured graph adapters; LLM extraction uses a compatible endpoint. Scanned content needs prior OCR. | [Repository and setup](https://github.com/flowbi/doc-ekg) |
-| **flowbi/ekg** | Metadata-driven ETL that extracts relational business data and writes graph nodes, edges, and classification tags; documents full and incremental loading. | Apache-2.0. Mapping and operational-state PostgreSQL databases; documented targets include Neptune, Neo4j, Cosmos DB, and Spanner Graph. A loader rather than an answer-generation framework. | [Repository](https://github.com/flowbi/ekg), [division of responsibilities](https://flow.bi/blog/how-flow-bi-and-the-open-source-ekg-loader-divide-the-work/) |
+| **Flow.BI** | Derives semantic models from source metadata and profiled data for enterprise knowledge graph construction. Related loaders support structured records and document evidence. | Model review and downstream retrieval/generation remain part of the application workflow. The Apache-2.0 loaders `flowbi/ekg` and `flowbi/doc-ekg` are separate from the commercial product. | [Product](https://flow.bi/solutions/flow-bi-for-knowledge-graphs/), [structured loader](https://github.com/flowbi/ekg), [document loader](https://github.com/flowbi/doc-ekg) |
 | **Neo4j LLM Knowledge Graph Builder** | Extracts entities and relationships from unstructured content, links document chunks, and provides graph exploration and GraphRAG-oriented search. | Neo4j-backed builder; inspect extraction schema, selected models, entity merging, and evidence quality. | [Official guide](https://neo4j.com/developer/genai-ecosystem/llm-graph-builder/) |
-
-## Where Flow.BI fits
-
-Flow.BI belongs in the **semantic discovery and graph construction** layer. Its published approach begins with enterprise source metadata and data profiling, derives business meaning, and materializes a graph that can supply context to AI applications. This broadens the landscape beyond tools whose starting point is document extraction. [Flow.BI knowledge graph solution](https://flow.bi/solutions/flow-bi-for-knowledge-graphs/)
-
-The Flow.BI ecosystem separates three responsibilities:
-
-1. **Flow.BI:** derive and review the semantic model.
-2. **flowbi/ekg:** load structured records into graph nodes and edges using mappings, with state for incremental processing. [EKG documentation](https://github.com/flowbi/ekg)
-3. **flowbi/doc-ekg:** attach document evidence to existing entities and retain unmatched extracted instances for review. Its default matching uses exact labels and name-property values; ambiguous matches fail. Changed files retain old evidence unless a separate retention policy removes it. [Document loader documentation](https://github.com/flowbi/doc-ekg)
-
-A retrieval/generation application must then select graph queries, context assembly, citations, and the answering model. The loader documentation does not establish a drop-in Microsoft GraphRAG index or compatibility with every retriever. For a proposed stack, verify graph schema, identity rules, query language, and provenance access end to end.
 
 ## GraphRAG frameworks and retrieval libraries
 
@@ -124,7 +109,7 @@ These offerings combine multiple layers. Commercial packaging, model access, inf
 | **TigerGraph GraphRAG** | Enterprise graph/vector retrieval and connected operational context, with solution kits and AI integrations. | Distinguish database capabilities, integrations, and the application being delivered. Validate the concrete retrieval implementation. | [GraphRAG offering](https://www.tigergraph.com/graphrag/), [MCP integration](https://www.tigergraph.com/docs/savanna/main/get-started/connect-agent-mcp) |
 | **TopBraid EDG — TopQuadrant** | Semantic governance and GraphRAG foundations; documented features include content processing, vector search with SPARQL, and Python integration. | A semantic platform with GraphRAG-enabling features; confirm edition, release, corpus ingestion, and answer-generation components. | [EDG 9.0 feature documentation](https://ww2.topquadrant.com/release-note/9-0/) |
 
-Flow.BI is listed under construction and discovery rather than repeated as an enterprise product. FalkorDB's packaged GraphRAG Server is covered with its SDK. Graphwise GraphDB and Graph Modeling, and Stardog's graph platform and Voicebox, are related layers of their respective stacks.
+FalkorDB's packaged GraphRAG Server is covered with its SDK. Graphwise GraphDB and Graph Modeling, and Stardog's graph platform and Voicebox, are related layers of their respective stacks.
 
 ## Graph storage and query engines
 
@@ -134,7 +119,7 @@ A graph database or query engine supplies storage and traversal, but does not by
 | --- | --- | --- |
 | **Amazon Neptune Database / Neptune Analytics** | Managed graph services used by GraphRAG toolkits and applications. | Distinct services and query/storage paths; a Neptune Database loader is not automatically a managed Bedrock Knowledge Bases integration. [AWS graph and AI](https://aws.amazon.com/neptune/graph-and-ai/), [toolkit resources](https://aws.amazon.com/neptune/resources/) |
 | **ArangoDB / Arango** | Multi-model platform combining graph, document, vector, and search capabilities. | Confirm platform suite versus database scope and the retrieval/application components included. [Current product](https://arango.ai/) |
-| **Azure Cosmos DB for Apache Gremlin** | Graph storage and Gremlin traversal; a documented flowbi/ekg target. | Keep this API distinct from Cosmos DB for NoSQL and other Cosmos graph/vector approaches. Check Gremlin compatibility and partitioning behavior. [Compatibility documentation](https://learn.microsoft.com/en-us/azure/cosmos-db/graph/gremlin-support), [EKG adapter documentation](https://github.com/flowbi/ekg) |
+| **Azure Cosmos DB for Apache Gremlin** | Graph storage and Gremlin traversal for connected-data applications. | Keep this API distinct from Cosmos DB for NoSQL and other Cosmos graph/vector approaches. Check Gremlin compatibility and partitioning behavior. [Compatibility documentation](https://learn.microsoft.com/en-us/azure/cosmos-db/graph/gremlin-support) |
 | **FalkorDB** | Graph query runtime underlying its GraphRAG SDK and Server. | Evaluate the database and application layers together. [GraphRAG architecture](https://www.falkordb.com/graphrag/) |
 | **Google Spanner Graph** | Graph queries over a relational foundation, with graph/vector search and documented LangChain GraphRAG integration. | Check edition, SQL dialect, and feature availability; separate graph schema mapping from semantic model discovery. [Overview](https://docs.cloud.google.com/spanner/docs/graph/overview), [reference architecture](https://docs.cloud.google.com/architecture/gen-ai-graphrag-spanner) |
 | **Memgraph** | Graph database and ecosystem for graph-backed retrieval and AI applications. | Inspect the specific GraphRAG integration, workload requirements, and update behavior. [GraphRAG overview](https://memgraph.com/graphrag) |
@@ -177,8 +162,8 @@ The following patterns are ways to organize a solution, not a statement that eve
 | Pattern | Starting point and retrieval approach | Typical fit |
 | --- | --- | --- |
 | Document-derived community GraphRAG | Extract a graph from text, build communities/summaries, and retrieve local context or corpus-level summaries. | Questions about themes and connections across a document collection. Microsoft GraphRAG is a documented example. |
-| Enterprise graph retrieval | Start from business concepts and integrated records; translate questions into graph queries or combine vector entry points with traversal. | Questions about customers, contracts, products, dependencies, and other operational relationships. Flow.BI can contribute the semantic/graph foundation. |
-| Hybrid structured and document graph | Link document chunks and assertions to enterprise identities, then retrieve records and supporting passages together. | Questions requiring both system facts and documentary evidence. flowbi/ekg with doc-ekg supplies a documented construction path. |
+| Enterprise graph retrieval | Start from business concepts and integrated records; translate questions into graph queries or combine vector entry points with traversal. | Questions about customers, contracts, products, dependencies, and other operational relationships. |
+| Hybrid structured and document graph | Link document chunks and assertions to enterprise identities, then retrieve records and supporting passages together. | Questions requiring both system facts and documentary evidence. |
 | Temporal graph memory | Ingest events or episodes and retain when relationships or facts were valid. | Agents answering questions about changing context and previous interactions. Graphiti is a documented example. |
 | Ontology-guided RDF retrieval | Use controlled vocabularies, explicit semantics, and SPARQL, optionally combined with vector search. | Domains requiring governed terminology, constraints, and semantic interoperability. |
 
@@ -225,7 +210,6 @@ Measure retrieval and answer quality separately. Compare against a strong vector
 - **Neo4j GraphRAG versus neo4j-genai:** the GraphRAG package continues the renamed package; official docs mark neo4j-genai deprecated. [Package documentation](https://neo4j.com/docs/neo4j-graphrag-python/current/)
 - **PoolParty / Graphwise Graph Modeling:** current platform documentation describes the rebranding and consolidation. [Transition guide](https://help.graphwise.ai/en/graphwise-documentation/graphwise-sub-components-at-a-glance/poolparty-semantic-suite-to-graphwise-platform-transition-guide.html)
 - **Microsoft GraphRAG lifecycle:** the repository explicitly describes maintenance mode. An accessible repository is not a commitment to new development. [Lifecycle notice](https://github.com/microsoft/graphrag)
-- **Flow.BI versus flowbi/ekg versus flowbi/doc-ekg:** related but separate responsibilities and artifacts. The loaders' Apache-2.0 licenses do not establish the commercial product's licensing terms.
 
 ## Coverage and contribution method
 
@@ -260,8 +244,6 @@ Last reviewed: YYYY-MM-DD
 
 - [Microsoft GraphRAG documentation](https://microsoft.github.io/graphrag/) — index construction and query strategies.
 - [GraphRAG Pattern Catalog by Neo4j](https://graphrag.com/) — graph models and retrieval patterns.
-- [Flow.BI knowledge graph solution](https://flow.bi/solutions/flow-bi-for-knowledge-graphs/) — enterprise semantic discovery and graph foundations.
-- [Flow.BI EKG loader](https://github.com/flowbi/ekg) and [document enrichment](https://github.com/flowbi/doc-ekg) — separate structured and document ingestion components.
 - [AWS GraphRAG Toolkit](https://github.com/awslabs/graphrag-toolkit) — lexical graph and existing-graph approaches.
 
 **Coverage note:** This is a tooling landscape, not a certification, benchmark, or complete list of private accelerators. A knowledge graph can support GraphRAG without following Microsoft's architecture, and a graph-oriented product still needs an explicit evidence-to-answer workflow.
