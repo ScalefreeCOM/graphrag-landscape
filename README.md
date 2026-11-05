@@ -7,6 +7,7 @@ A curated landscape of tools for building knowledge graphs, retrieving connected
 ## Contents
 
 - [Scope and terminology](#scope-and-terminology)
+- [Semantic models and knowledge graphs](#semantic-models-and-knowledge-graphs)
 - [Landscape at a glance](#landscape-at-a-glance)
 - [Graph construction and semantic discovery](#graph-construction-and-semantic-discovery)
 - [GraphRAG frameworks and retrieval libraries](#graphrag-frameworks-and-retrieval-libraries)
@@ -35,12 +36,32 @@ Three distinctions matter when reading this landscape:
 
 The linked product pages, maintainer repositories, and official documentation are the evidence for factual descriptions. Architecture guidance and comparison questions are editorial synthesis. This is a research landscape, not an installation test or benchmark. Verify exact versions, licenses, deployment options, adapters, and operational guarantees before adopting a stack.
 
+## Semantic models and knowledge graphs
+
+The landscape distinguishes the **model that defines meaning**, the **graph that represents knowledge**, and the **engine that stores or queries it**. They are related, but they are different deliverables.
+
+| Concept | Purpose and typical contents | Example |
+| --- | --- | --- |
+| **Semantic model** | Defines the meaning of concepts, attributes, relationship types, identifiers, and their mappings to source data. May include business rules and constraints. | Defines `Supplier`, `Contract`, and `SUPPLIES_UNDER`; explains which source fields identify a supplier and what an active contract means. |
+| **Ontology** | A formal way to express domain concepts and relationships, potentially including logical axioms and inference semantics. A semantic model need not use an ontology language. | Defines `Supplier` as a kind of `Organization`, and the meaning of relationships between organizations and contracts. |
+| **Knowledge graph** | Represents identifiable entities and their relationships, facts or assertions, and supporting context such as provenance and time. Can also contain the semantic model itself. | Represents supplier `S-104`, contract `C-882`, and the assertion that S-104 supplies under C-882, with source and validity information. |
+| **Graph database or query engine** | Stores or exposes graph structures and executes queries over them. | Executes a query to find suppliers connected to active contracts. |
+| **GraphRAG application** | Retrieves graph-derived evidence, assembles context, and generates an answer with supporting references. | Answers which suppliers are affected by a policy, citing contract records and policy passages. |
+
+This is a distinction of roles, not a requirement for separate files or systems. A semantic model can itself be represented as a graph; a knowledge graph can combine schema, ontology, and instance-level facts. RDF Schema defines vocabulary for classes and properties, while OWL supports classes, properties, individuals, and logical axioms. Ontology reasoning and data validation are distinct capabilities. [W3C RDF Schema](https://www.w3.org/TR/rdf-schema/), [W3C OWL primer](https://www.w3.org/TR/owl2-primer/)
+
+**Terminology varies by product.** In analytics, “semantic model” can also refer to dimensions, measures, and metric definitions. That label alone does not establish an ontology, a populated knowledge graph, or GraphRAG retrieval. Evaluate the actual artifact and behavior.
+
+For this landscape, classify tools by what they produce or consume: **semantic definitions**, **populated graph data**, **graph queries**, or **retrieved evidence and answers**. Generating a semantic model does not by itself populate a graph; loading nodes and edges does not by itself establish shared business meaning.
+
 ## Landscape at a glance
 
 | Layer | Function | Representative tools |
 | --- | --- | --- |
-| Semantic discovery and graph construction | Discover concepts, identifiers, relationships, and graph mappings; load enterprise records or document evidence | Flow.BI, LlamaIndex extractors, Neo4j LLM Knowledge Graph Builder |
-| Ontologies and entity resolution | Maintain vocabulary and constraints; reconcile records representing the same entity | Protégé, TopBraid EDG, Graphwise Graph Modeling, Senzing |
+| Semantic discovery and modeling | Define or derive concepts, relationship types, identifiers, meaning, and source mappings | Flow.BI, metaphactory, TopBraid EDG, Graphwise Graph Modeling |
+| Knowledge graph construction and enrichment | Instantiate entities and relationships from records or documents; attach evidence and update graph data | LlamaIndex extractors, Neo4j LLM Knowledge Graph Builder, graph loaders |
+| Ontology authoring | Express and maintain formal domain vocabulary and axioms | Protégé, TopBraid EDG, Graphwise Graph Modeling |
+| Entity resolution | Reconcile records and mentions representing the same real-world entity | Senzing, framework-specific resolution components |
 | Retrieval and generation frameworks | Graph traversal, vector/graph retrieval, community search, query generation, and answer synthesis | Microsoft GraphRAG, LightRAG, Neo4j GraphRAG, LlamaIndex, KAG, AWS GraphRAG Toolkit |
 | Temporal graph memory | Maintain evolving facts and retrieve context for agents | Graphiti, cognee |
 | Enterprise applications and managed services | Packaged graph-grounded assistants and managed GraphRAG workflows | Amazon Bedrock Knowledge Bases, Graphwise GraphRAG, Stardog Voicebox, metaphactory, TigerGraph |
@@ -51,16 +72,19 @@ The linked product pages, maintainer repositories, and official documentation ar
 flowchart TB
     S["Enterprise systems<br/>ERP · CRM · relational data"]
     D["Documents and other content"]
-    M["Semantic discovery and modeling<br/>Concepts · identifiers · mappings"]
+    M["Semantic model<br/>Concept definitions · relationship types · mappings"]
     L["Graph loading<br/>Structured records · incremental updates"]
     X["Document extraction and linking<br/>Entities · relationships · source passages"]
-    G["Knowledge graph<br/>Entities · relationships · evidence"]
+    G["Populated knowledge graph<br/>Entity instances · facts · evidence"]
     R["Retrieval<br/>Graph queries · vector search · graph expansion"]
     A["Answer generation<br/>Context · citations · language model"]
     E["Evaluation and observability"]
-    S --> M --> L --> G
+    S -. "metadata and profiling" .-> M
+    S --> L --> G
+    M -. "defines mappings and meaning" .-> L
     D --> X --> G
-    M -. "concept vocabulary" .-> X
+    M -. "guides extraction and linking" .-> X
+    M -. "defines types and meaning" .-> G
     G --> R --> A
     E -.-> X
     E -.-> R
@@ -71,9 +95,11 @@ flowchart TB
 
 ## Graph construction and semantic discovery
 
+The entries below contribute different outputs: semantic definitions and mappings, populated graph data, or both through separate components. Discovery of entity types and relationship types should be assessed separately from extraction of entity instances and relationship assertions.
+
 | Tool | Contribution | Dependencies and boundaries | Primary evidence |
 | --- | --- | --- | --- |
-| **Flow.BI** | Derives semantic models from source metadata and profiled data for enterprise knowledge graph construction. Related loaders support structured records and document evidence. | Model review and downstream retrieval/generation remain part of the application workflow. The Apache-2.0 loaders `flowbi/ekg` and `flowbi/doc-ekg` are separate from the commercial product. | [Product](https://flow.bi/solutions/flow-bi-for-knowledge-graphs/), [structured loader](https://github.com/flowbi/ekg), [document loader](https://github.com/flowbi/doc-ekg) |
+| **Flow.BI** | Derives semantic definitions and source mappings from metadata and profiled data. Separate loaders populate and enrich a knowledge graph with structured records and document evidence. | Model review and downstream retrieval/generation remain part of the application workflow. The Apache-2.0 loaders `flowbi/ekg` and `flowbi/doc-ekg` are separate from the commercial product. | [Product](https://flow.bi/solutions/flow-bi-for-knowledge-graphs/), [structured loader](https://github.com/flowbi/ekg), [document loader](https://github.com/flowbi/doc-ekg) |
 | **Neo4j LLM Knowledge Graph Builder** | Extracts entities and relationships from unstructured content, links document chunks, and provides graph exploration and GraphRAG-oriented search. | Neo4j-backed builder; inspect extraction schema, selected models, entity merging, and evidence quality. | [Official guide](https://neo4j.com/developer/genai-ecosystem/llm-graph-builder/) |
 
 ## GraphRAG frameworks and retrieval libraries
@@ -176,7 +202,8 @@ Compare complete workflows using the same data, questions, model budget, and evi
 | Dimension | Questions to resolve |
 | --- | --- |
 | Source coverage | Does it ingest documents, structured records, existing graphs, or a combination? Are connectors production-ready for your sources? |
-| Semantic model | Is the ontology discovered, prescribed, extracted from text, or manually authored? How are changes reviewed and versioned? |
+| Semantic model | What concepts, relationship types, identifiers, definitions, and source mappings are explicit? Is an ontology used? How is the model discovered, authored, reviewed, and versioned? |
+| Knowledge graph | Which actual entities, facts, assertions, evidence, and temporal context are populated? How are graph data checked against the semantic model, updated, and corrected? |
 | Identity | How are aliases, shared business keys, duplicate records, ambiguous names, and cross-source identities reconciled? Can incorrect merges be reversed? |
 | Relationship quality | Are edges source-backed facts, extracted assertions, inferred relationships, or co-occurrence? Can these types be distinguished during retrieval? |
 | Retrieval | Does it use query generation, neighborhood expansion, path search, PageRank, community summaries, vector search, or a combination? |
@@ -231,7 +258,9 @@ Name and maintainer:
 Primary layer:
 Relationship: direct / supporting
 Inputs: structured records / documents / existing graph
-Semantic model and entity resolution approach:
+Semantic model / ontology produced or consumed:
+Knowledge graph data produced or consumed:
+Entity resolution approach:
 Construction or retrieval method:
 Storage and model dependencies:
 Provenance, updates, and deletion behavior:
@@ -242,6 +271,7 @@ Last reviewed: YYYY-MM-DD
 
 ## Further reading
 
+- [W3C RDF Schema](https://www.w3.org/TR/rdf-schema/) and [OWL primer](https://www.w3.org/TR/owl2-primer/) — formal vocabulary, classes, properties, and individuals.
 - [Microsoft GraphRAG documentation](https://microsoft.github.io/graphrag/) — index construction and query strategies.
 - [GraphRAG Pattern Catalog by Neo4j](https://graphrag.com/) — graph models and retrieval patterns.
 - [AWS GraphRAG Toolkit](https://github.com/awslabs/graphrag-toolkit) — lexical graph and existing-graph approaches.
